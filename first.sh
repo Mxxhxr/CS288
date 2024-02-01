@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #The first line tells unix that the file is to be executed by /bin/sh
 
 echo "What is your name"

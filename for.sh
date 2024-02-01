@@ -1,5 +1,4 @@
-#!/bin/sh
-
+#!/bin/bash
 # INPUT_STRING="hello"
 
 # while [ "$INPUT_STRING" != "bye" ]
