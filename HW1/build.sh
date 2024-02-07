@@ -23,7 +23,6 @@ else
     sfx=(".c")
 fi
 
-
 #Iterate through each suffix
 for sufx in ${sfx[@]}
 do
