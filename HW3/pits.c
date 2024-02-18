@@ -2,23 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-/* - if theres double digit pebbles it messes with the board
-    - if all the oppnent pits are empty current player has to make a move so that
-    opponent gets atleast 1 pebble, if not possible, current player captures all
-    pebbles in their own row and end the game.
-    - if palyer makes a move to capture all pebbles on opponents side, player drops but
-    doesn't collect.
-    - by the same token, if the player makes a move and can collect multiple pits, do so.
-*/
+
 void printBoard(int pit1, int pit2, int pit3, int pit4, int pit5, int pit6, int pit7, int pit8, int pit9, int pit10, int pit11, int pit12, int northScore, int southScore) {
     printf("        Pits and Pebbles\n");
     printf("        ----------------\n\n");
     printf("             North\n\n");
     printf("  12   11   10    9    8    7\n");
     printf("+----+----+----+----+----+----+\n");
-    printf("| %2d | %2d | %2d | %2d | %2d |  %d |    North %2d\n", pit12, pit11, pit10, pit9, pit8, pit7, northScore);
+    printf("| %2d | %2d | %2d | %2d | %2d | %2d |    North %2d\n", pit12, pit11, pit10, pit9, pit8, pit7, northScore);
     printf("+----+----+----+----+----+----+\n");
-    printf("| %2d | %2d | %2d | %2d | %2d |  %d |    South %2d\n",  pit1, pit2, pit3, pit4, pit5, pit6, southScore);
+    printf("| %2d | %2d | %2d | %2d | %2d | %2d |    South %2d\n",  pit1, pit2, pit3, pit4, pit5, pit6, southScore);
     printf("+----+----+----+----+----+----+\n");
     printf("   1    2    3    4    5    6\n\n");
     printf("             South\n");
@@ -34,12 +27,14 @@ void printBoard(int pit1, int pit2, int pit3, int pit4, int pit5, int pit6, int 
     }
 }
 
-
 void move(int *pit1, int *pit2, int *pit3, int *pit4, int *pit5, int *pit6, int *pit7, int *pit8, int *pit9, int *pit10, int *pit11, int *pit12, int *northScore, int *southScore, int *currPlayer, int *nextMove) {
     /* currPlayer; 1 is north, 0 is south*/
     int pebbles;
     int i;
     int board[12];
+    int collected = 0;
+    int northTempScore = *northScore;
+    int southTempScore = *southScore;
 
     board[0] = *pit1;
     board[1] = *pit2;
@@ -63,18 +58,62 @@ void move(int *pit1, int *pit2, int *pit3, int *pit4, int *pit5, int *pit6, int 
         i = (i + 1) % 12; /*start dropping after the pit we picked up*/
         board[i]++;
         pebbles--;
-    }
+        if ((board[i] == 2 || board[i] == 3) && ((*currPlayer == 1 && i <= 6) || (*currPlayer == 0 && i >= 7))) {
+            if (*currPlayer == 1) {
+                collected++;
+                *northScore += board[i];
+                board[i] = 0;
 
-    if ((board[i] == 2 || board[i] == 3) && ((*currPlayer == 1 && i <= 6) || (*currPlayer == 0 && i >= 7))) {
-        if (*currPlayer == 1) {
-            *northScore += board[i];
-            board[i] = 0;
+                while ((board[(i - 1 + 12) % 12] == 2) || board[(i - 1 + 12) % 12] == 3) {
+                    *northScore += board[(i - 1 + 12) % 12];
+                    board[(i - 1 + 12) % 12] = 0;
+                }            
+                if (collected == 6) {
+                    *northScore = northTempScore;
+                    board[0] = *pit1;
+                    board[1] = *pit2;
+                    board[2] = *pit3;
+                    board[3] = *pit4;
+                    board[4] = *pit5;
+                    board[5] = *pit6;
+                    board[6] = *pit7;
+                    board[7] = *pit8;
+                    board[8] = *pit9;
+                    board[9] = *pit10;
+                    board[10] = *pit11;
+                    board[11] = *pit12;
+                }
+            }
+            else {
+                *southScore += board[i];
+                collected++;
+                board[i] = 0;
+
+                while ((board[(i - 1 + 12) % 12] == 2) || board[(i - 1 + 12) % 12] == 3) {
+                    *southScore += board[(i - 1 + 12) % 12];
+                    board[(i - 1 + 12) % 12] = 0;
+                }
+                if (collected == 5) {
+                    *southScore = southTempScore;
+                    board[0] = *pit1;
+                    board[1] = *pit2;
+                    board[2] = *pit3;
+                    board[3] = *pit4;
+                    board[4] = *pit5;
+                    board[5] = *pit6;
+                    board[6] = *pit7;
+                    board[7] = *pit8;
+                    board[8] = *pit9;
+                    board[9] = *pit10;
+                    board[10] = *pit11;
+                    board[11] = *pit12;
+
+                }
+            }
         }
-        else {
-            *southScore += board[i];
-            board[i] = 0;
-        }
+
     }
+    printf("Collected: %d", collected);
     /*update the pits*/
     *pit1 = board[0];
     *pit2 = board[1];
@@ -102,7 +141,6 @@ int main(int argc, char *argv[]) {
     int size;
     int nextMove = 0;
     int currPlayer = 1; /* 0 is north, 1 is south*/
-
 
     /* read input file */
     if (argc == 1) {
@@ -154,12 +192,6 @@ int main(int argc, char *argv[]) {
             continue;
         }
     }
-        /* check for any game stopages (win, tie, or no end) 
-        check the first move to see if its south or north first. 
-        read a move directly from the file, pass it into move function like so and the current player:
-        int move(northRow[], southRow[], northScore, southScore, 12) {
-    
-        */
 
     printBoard (pit1, pit2, pit3, pit4, pit5, pit6, pit7, pit8, pit9, pit10, pit11, pit12, northScore, southScore);
     fclose(ptr);
