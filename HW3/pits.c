@@ -22,7 +22,7 @@ void printBoard(int pit1, int pit2, int pit3, int pit4, int pit5, int pit6, int 
     else if(northScore < southScore && southScore > 24) {
         printf("South wins!\n");
     }
-    else if(northScore == southScore && northScore > 0) {
+    else if(northScore == 24 && southScore == 24) {
         printf("It's a tie!\n");
     }
 }
@@ -113,7 +113,6 @@ void move(int *pit1, int *pit2, int *pit3, int *pit4, int *pit5, int *pit6, int 
         }
 
     }
-    printf("Collected: %d", collected);
     /*update the pits*/
     *pit1 = board[0];
     *pit2 = board[1];
