@@ -5,7 +5,7 @@
 struct Node {
     int terminal;
     struct Node *parent;
-    char transition;
+    int transition;
     struct Node *children[16];
 };
 
@@ -13,12 +13,10 @@ struct Tree {
     struct Node *root;
 };
 
-
 struct Tree TREE_new(void) {
     /* construct an empty tree */
     struct Tree tree;
     tree.root = NULL;
-    /*tree.root->parent = NULL;*/
     return tree;
 }
 
@@ -33,7 +31,6 @@ void TREE_clear(struct Tree *t) {
     if (t->root == NULL) {
         return;
     }
-    
     rClear(t->root);
     t->root = NULL;
 }
@@ -46,8 +43,6 @@ void TREE_insert(struct Tree *t, char *key) {
     int index;
     struct Node *curr = t->root;
     char *hexKey = malloc(strlen(key) * 2 + 1);
-    /*create a char arr with double the length of key + 1 (for \0)
-    use charToHex to convert the key to hex and modify hexKey */
 
     charToHex(key, hexKey);
 
@@ -55,30 +50,104 @@ void TREE_insert(struct Tree *t, char *key) {
         t->root = createNode();
         curr = t->root;
     }
-
     for(i = 0; i < strlen(hexKey); i++) {
         index = hexKey[i] % 16;
         if(curr->children[index] == NULL) {
             curr->children[index] = createNode();
-            curr->children[index]->parent = curr; /* set the parent */
+            curr->children[index]->parent = curr; 
             curr->children[index]->transition = hexKey[i];
-            /*printf("INSERTING: %c\n", curr->children[index]->transition);*/
-
+            /* printf("INSERTING: %c\n", curr->children[index]->transition); */
         }
-        curr = curr->children[index];  /* Update current node */
+        curr = curr->children[index]; 
     }
+    curr->terminal = 1;
     free(hexKey);
 }
 
-/*
 int TREE_contains(struct Tree *t, char *key) {
-    // return 1 if the tree contains the key; otherwise 0 
+    /* return 1 if the tree contains the key; otherwise 0 */
+    struct Node *currNode = t->root;
+    int index;
+    char *hexKey = malloc(strlen(key) * 2 + 1);
+    char *hexKeyStart;
+    if (t->root == NULL) {
+        return 0;
+    }
+    if (hexKey == NULL) {
+        exit(EXIT_FAILURE);
+    }
+    charToHex(key, hexKey);
+    hexKeyStart = hexKey;  /* Store the start of memory */
+
+    while(*hexKey != '\0') {
+        index = *hexKey % 16;
+        if (currNode->children[index] == NULL) {
+            free(hexKeyStart); 
+            return 0;
+        }
+        currNode = currNode->children[index];
+        hexKey++;
+    }
+    free(hexKeyStart); 
+    return (currNode->terminal == 1) ? 1 : 0;
 }
 
 void TREE_remove(struct Tree *t, char *key) {
-    // Remove the key from the tree; trim the leaves when possible
-}
+    /* Remove the key from the tree; trim the leaves when possible */
+    struct Node *currNode = t->root;
+    struct Node *pNode;
+    int leaf = 1;
+    int i;
+    int index;
+    int indx;
+    char *hexKey = malloc(strlen(key) * 2 + 1);
+    char *hexKeyStart;
+    
+    if (t->root == NULL) { /* empty tree */
+        free(hexKey);
+        return;
+    }
+    if ((TREE_contains(t, key) == 0)) { /* key to remove isn't in the tree  */
+        free(hexKey);
+        return;
+    }
+    
+    charToHex(key, hexKey); /* convert key to hexkey*/
+    hexKeyStart = hexKey; /* store start so we don't lose in while incrementing*/
+    /* start at the root and traverse tree based on chars in the key to find the key */
+    while(*hexKey != '\0') {
+        index = *hexKey % 16;
+        if(currNode->children[index] == NULL) {
+            free(hexKey);
+            return; /* key not found */
+        }
+        currNode = currNode->children[index]; /*if child contains the key, move to the child*/
+        hexKey++;
+    }
+    /* if the node is a leaf, remove upwards until another terminal is found or there is a parent with other children */
+    for (i=0; i < 16 ;i++) {
+        if(currNode->children[i] != NULL) {
+            leaf = 0; /* set leaf to false if node */
+            break;
+        }
+    }
+    /* printf("Removing key: %s\n", key); */
+    currNode->terminal = 0; /* if the node has children, set terminal to false (remove key from tree) */
+    if(leaf && currNode != t->root) {
+        pNode = currNode->parent;
+        indx = currNode->transition % 16;
+        pNode->children[indx] = NULL;
 
+        while(pNode != t->root && pNode->terminal == 0) {
+            currNode = pNode;
+            pNode = pNode->parent;
+            indx = currNode->transition % 16;
+            pNode->children[indx] = NULL;
+        }
+    }
+    free(hexKeyStart);
+}
+/*
 char **TREE_search(struct Tree *t, char *str) {
     // 
     // Search for all keys starting with str
@@ -95,12 +164,10 @@ void rClear(struct Node *node) {
     if (node == NULL) {
         return;
     }
-
     for(i=0; i<16; i++) { 
         rClear(node->children[i]); 
     }
-
-    /*printf("DELETING: %c\n", node->transition);*/
+    /* printf("DELETING: %c\n", node->transition); */
     free(node);
 }
 
@@ -111,7 +178,6 @@ struct Node* createNode(void) {
     if (newNode == NULL) {
         exit(EXIT_FAILURE);
     }
-
     newNode->terminal = 0;
     newNode->parent = NULL;
 
@@ -122,26 +188,33 @@ struct Node* createNode(void) {
 }
 
 void charToHex(char *key, char *hexArr) {
-    /*void bcuz we just modifying the hex array*/
     while (*key != '\0') {
         sprintf(hexArr, "%02X", (unsigned int)*key);
         hexArr += 2;
         key++;
     }
-    *hexArr = '\0'; /*wont overwrite bcuz dereference and we inceremented hexarr by 2 in loop*/
-
+    *hexArr = '\0';
 }
-
-
 
 int main() {
     struct Tree myTree = TREE_new();
-
-    TREE_insert(&myTree, "m");
-
-    /*printf("Tree empty? 1=yes, 0=no=>> %d", TREE_empty(&myTree));*/
+    TREE_insert(&myTree, "can");
+    TREE_insert(&myTree, "candy");
+    TREE_insert(&myTree, "candyland");
+    TREE_remove(&myTree, "can");
+    printf("Tree empty? 1 is yes, 0 is no:: %d\n", TREE_empty(&myTree)); 
+    printf("Tree has key CANDY? 1 is yes, 0 is no:: %d\n", TREE_contains(&myTree, "candy"));
+    /*printf("Tree empty BEFORE INSERTS? 1=yes, 0=no=>> %d\n", TREE_empty(&myTree)); 
+    printf("Tree empty AFTER REMOVING ONE KEY? 1=yes, 0=no=>> %d\n", TREE_empty(&myTree)); 
+    TREE_insert(&myTree, "helloween");
+    TREE_insert(&myTree, "hello my name is jeff");
+    printf("Tree has key HELLO? %d\n", TREE_contains(&myTree, "hello"));
+    printf("Tree has key HE? %d\n", TREE_contains(&myTree, "he")); 
+    printf("Tree has key HELLOWEEN? %d\n", TREE_contains(&myTree, "help")); 0
+    printf("Tree empty AFTER CLEARING? 1=yes, 0=no=>> %d\n", TREE_empty(&myTree)); 
+    */
     
-    /*puts("\n------------\n");*/
+    /* puts("\n------------\n"); */
 
     TREE_clear(&myTree);
 
