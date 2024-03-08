@@ -147,16 +147,103 @@ void TREE_remove(struct Tree *t, char *key) {
     }
     free(hexKeyStart);
 }
-/*
+
+
+void appendKeys(struct Node *node, char *hexStr, char ***keys, int *counter);
+void hexToChar(char *hexStr, char *charArr);
 char **TREE_search(struct Tree *t, char *str) {
-    // 
-    // Search for all keys starting with str
-    // Return an array of strings; the last pointer is NULL
-    //
+    struct Node *node = t->root;
+    char *hexStr = malloc(strlen(str) * 2 + 1);
+    char *hexStrCopy = hexStr;
+    char **answer;
+    int ind;
+    int counter = 0;
+    int i;
+    char *charKey;
+
+    while (*str != '\0') {
+        sprintf(hexStr, "%02X", (unsigned int)*str);
+        hexStr += 2;
+        str++;
+    }
+    while (*hexStr != '\0') {
+        ind = *hexStr % 16;
+        if (node->children[ind] == NULL) {
+            free(hexStrCopy);
+            return NULL;
+        }
+        node = node->children[ind];
+        hexStr++;
+    }
+    answer = malloc(sizeof(char *));
+    if (answer == NULL) {
+        free(hexStrCopy);
+        exit(EXIT_FAILURE);
+    }
+    appendKeys(node, "", &answer, &counter);
+
+    answer = realloc(answer, (counter + 1) * sizeof(char *));
+    if (answer == NULL) {
+        free(hexStrCopy);
+        exit(EXIT_FAILURE);
+    }
+    /* Convert hexadecimal to ASCII */
+    for (i = 0; i < counter; i++) {
+        charKey = (char *)malloc(strlen(answer[i]) / 2 + 1);
+        if (charKey == NULL) {
+            /* Handle allocation failure */
+            exit(EXIT_FAILURE);
+        }
+        hexToChar(answer[i], charKey);
+
+        free(answer[i]);
+        answer[i] = charKey;
+    }
+
+    answer[counter] = NULL;
+    free(hexStrCopy);
+
+    return answer;
 }
-*/
 
 /* helper functions */
+char *myDup(char *s);
+void appendKeys(struct Node *node, char *hexStr, char ***keys, int *counter) {
+    int i;
+
+    for (i = 0; i < 16; i++) {
+        if (node->children[i] != NULL) {
+            char *key = malloc(strlen(hexStr) + 2);  
+            if (key == NULL) {
+                exit(EXIT_FAILURE);
+            }
+
+            strcpy(key, hexStr);  
+            key[strlen(hexStr)] = node->children[i]->transition;
+            key[strlen(hexStr) + 1] = '\0';
+
+            if (node->children[i]->terminal) {
+                (*keys)[(*counter)++] = myDup(key);
+            }
+
+            appendKeys(node->children[i], key, keys, counter);  
+            free(key);  
+        }
+    }
+}
+
+
+char *myDup(char *s) {
+    /*strdup was being weird so I made my own*/
+    char *d = malloc(strlen(s) + 1);
+    if (d == NULL) {
+        return NULL;
+    }
+    strcpy(d, s);
+    return d;
+}
+
+
 void rClear(struct Node *node) {
         /*calls recursive clear and deletes on each child until it reaches leaf 
         in which case it simply cant call recursive clear*/
@@ -196,27 +283,68 @@ void charToHex(char *key, char *hexArr) {
     *hexArr = '\0';
 }
 
+
+void hexToChar(char *hexStr, char *charArr) {
+    while (*hexStr != '\0') {
+        char byte[3];
+        byte[0] = *hexStr;
+        hexStr++;
+        byte[1] = *hexStr;
+        hexStr++;
+        byte[2] = '\0';
+        *charArr = strtol(byte, NULL, 16);
+        charArr++;
+    }
+    *charArr = '\0';
+}
+
 int main() {
-    struct Tree myTree = TREE_new();
-    TREE_insert(&myTree, "can");
-    TREE_insert(&myTree, "candy");
-    TREE_insert(&myTree, "candyland");
-    TREE_remove(&myTree, "can");
-    printf("Tree empty? 1 is yes, 0 is no:: %d\n", TREE_empty(&myTree)); 
-    printf("Tree has key CANDY? 1 is yes, 0 is no:: %d\n", TREE_contains(&myTree, "candy"));
-    /*printf("Tree empty BEFORE INSERTS? 1=yes, 0=no=>> %d\n", TREE_empty(&myTree)); 
-    printf("Tree empty AFTER REMOVING ONE KEY? 1=yes, 0=no=>> %d\n", TREE_empty(&myTree)); 
-    TREE_insert(&myTree, "helloween");
-    TREE_insert(&myTree, "hello my name is jeff");
-    printf("Tree has key HELLO? %d\n", TREE_contains(&myTree, "hello"));
-    printf("Tree has key HE? %d\n", TREE_contains(&myTree, "he")); 
-    printf("Tree has key HELLOWEEN? %d\n", TREE_contains(&myTree, "help")); 0
-    printf("Tree empty AFTER CLEARING? 1=yes, 0=no=>> %d\n", TREE_empty(&myTree)); 
-    */
-    
-    /* puts("\n------------\n"); */
+    char **suggestions;
+    int i;
 
-    TREE_clear(&myTree);
+    struct Tree t = TREE_new();
+    TREE_insert(&t, "hello");
+    TREE_insert(&t, "hell");
+    TREE_insert(&t, "helloween");
 
+    suggestions = TREE_search(&t, "h");
+    if (suggestions != NULL) {
+        for (i = 0; suggestions[i] != NULL; ++i) {
+            puts(suggestions[i]);
+            free(suggestions[i]);
+        }
+        free(suggestions);
+    }
+    puts("----");
+
+    suggestions = TREE_search(&t, "hell");
+    if (suggestions != NULL) {
+        for (i = 0; suggestions[i] != NULL; ++i) {
+            puts(suggestions[i]);
+            free(suggestions[i]);
+        }
+        free(suggestions);
+    }
+    puts("----");
+
+    suggestions = TREE_search(&t, "hello");
+    if (suggestions != NULL) {
+        for (i = 0; suggestions[i] != NULL; ++i) {
+            puts(suggestions[i]);
+            free(suggestions[i]);
+        }
+        free(suggestions);
+    }
+    puts("----");
+
+    suggestions = TREE_search(&t, "helloween");
+    if (suggestions != NULL) {
+        for (i = 0; suggestions[i] != NULL; ++i) {
+            puts(suggestions[i]);
+            free(suggestions[i]);
+        }
+        free(suggestions);
+    }
+    puts("----");
     return 0;
 }
