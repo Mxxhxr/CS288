@@ -282,7 +282,6 @@ void hexToChar(char *hexStr, char *charArr) {
     }
     *charArr = '\0';
 }
-
 int main() {
     char input[100]; // Buffer to store user input
     char **suggestions;
