@@ -149,55 +149,51 @@ void TREE_remove(struct Tree *t, char *key) {
 }
 
 
-void appendKeys(struct Node *node, char *hexStr, char ***keys, int *counter);
+
+
+
+
+
+void rSearch(struct Node *node, char *str, char *prefix, char ***keys, int *counter);
+char *myDup(char *s);
 void hexToChar(char *hexStr, char *charArr);
+
 char **TREE_search(struct Tree *t, char *str) {
     struct Node *node = t->root;
+    char **answer = NULL;
     char *hexStr = malloc(strlen(str) * 2 + 1);
     char *hexStrCopy = hexStr;
-    char **answer;
-    int ind;
     int counter = 0;
+    int capacity = 10;
     int i;
-    char *charKey;
-
+    answer = malloc(capacity * sizeof(char *));
+    
     while (*str != '\0') {
         sprintf(hexStr, "%02X", (unsigned int)*str);
         hexStr += 2;
         str++;
     }
+    hexStr = hexStrCopy;
+    
     while (*hexStr != '\0') {
-        ind = *hexStr % 16;
-        if (node->children[ind] == NULL) {
+        int index = *hexStr % 16;
+        if (node->children[index] == NULL) {
             free(hexStrCopy);
+            free(answer);
             return NULL;
         }
-        node = node->children[ind];
+        node = node->children[index];
         hexStr++;
     }
-    answer = malloc(sizeof(char *));
-    if (answer == NULL) {
-        free(hexStrCopy);
-        exit(EXIT_FAILURE);
-    }
-    appendKeys(node, "", &answer, &counter);
 
-    answer = realloc(answer, (counter + 1) * sizeof(char *));
-    if (answer == NULL) {
-        free(hexStrCopy);
-        exit(EXIT_FAILURE);
-    }
-    /* Convert hexadecimal to ASCII */
+    rSearch(node, str, "", &answer, &counter);
+
+    /* Convert hex strings to char arrays */
     for (i = 0; i < counter; i++) {
-        charKey = (char *)malloc(strlen(answer[i]) / 2 + 1);
-        if (charKey == NULL) {
-            /* Handle allocation failure */
-            exit(EXIT_FAILURE);
-        }
-        hexToChar(answer[i], charKey);
-
+        char *charArray = malloc(strlen(answer[i]) / 2 + 1);
+        hexToChar(answer[i], charArray);
         free(answer[i]);
-        answer[i] = charKey;
+        answer[i] = charArray;
     }
 
     answer[counter] = NULL;
@@ -206,35 +202,31 @@ char **TREE_search(struct Tree *t, char *str) {
     return answer;
 }
 
-/* helper functions */
-char *myDup(char *s);
-void appendKeys(struct Node *node, char *hexStr, char ***keys, int *counter) {
+void rSearch(struct Node *node, char *str, char *prefix, char ***keys, int *counter) {
     int i;
+    char *newPrefix;
 
     for (i = 0; i < 16; i++) {
         if (node->children[i] != NULL) {
-            char *key = malloc(strlen(hexStr) + 2);  
-            if (key == NULL) {
+            char nextChar[2];
+            sprintf(nextChar, "%c", node->children[i]->transition);
+            newPrefix = malloc(strlen(prefix) + 2);
+            if (newPrefix == NULL) {
                 exit(EXIT_FAILURE);
             }
-
-            strcpy(key, hexStr);  
-            key[strlen(hexStr)] = node->children[i]->transition;
-            key[strlen(hexStr) + 1] = '\0';
-
-            if (node->children[i]->terminal) {
-                (*keys)[(*counter)++] = myDup(key);
+            strcpy(newPrefix, prefix);
+            strcat(newPrefix, nextChar);
+            if (node->children[i]->terminal == 1 && strcmp(newPrefix, str) != 0) {
+                (*keys)[(*counter)++] = myDup(newPrefix);
             }
-
-            appendKeys(node->children[i], key, keys, counter);  
-            free(key);  
+            rSearch(node->children[i], str, newPrefix, keys, counter);
+            free(newPrefix);
         }
     }
 }
 
-
 char *myDup(char *s) {
-    /*strdup was being weird so I made my own*/
+    /* strdup was being weird so I made my own */
     char *d = malloc(strlen(s) + 1);
     if (d == NULL) {
         return NULL;
