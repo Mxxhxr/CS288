@@ -162,6 +162,7 @@ char **TREE_search(struct Tree *t, char *str) {
     struct Node *node = t->root;
     char **answer = NULL;
     char *hexStr = malloc(strlen(str) * 2 + 1);
+    char *originalStr = strdup(str);
     char *hexStrCopy = hexStr;
     int counter = 0;
     int capacity = 10;
@@ -173,33 +174,39 @@ char **TREE_search(struct Tree *t, char *str) {
         hexStr += 2;
         str++;
     }
-    hexStr = hexStrCopy;
+    hexStr = hexStrCopy; 
     
     while (*hexStr != '\0') {
         int index = *hexStr % 16;
         if (node->children[index] == NULL) {
-            free(hexStrCopy);
-            free(answer);
+            free(hexStrCopy);  
+            free(originalStr); 
+            for (i = 0; i < counter; i++) {
+                free(answer[i]);  
+            }
+            free(answer);      
             return NULL;
         }
         node = node->children[index];
         hexStr++;
     }
-
-    rSearch(node, str, "", &answer, &counter);
-
-    /* Convert hex strings to char arrays */
-    for (i = 0; i < counter; i++) {
-        char *charArray = malloc(strlen(answer[i]) / 2 + 1);
-        hexToChar(answer[i], charArray);
-        free(answer[i]);
-        answer[i] = charArray;
+    
+    rSearch(node, "", "", &answer, &counter);
+    
+    char **finalAnswers = malloc((counter + 1) * sizeof(char *));  
+    for (int i = 0; i < counter; i++) {
+        finalAnswers[i] = malloc(strlen(originalStr) + (strlen(answer[i]) / 2) + 1);  
+        strcpy(finalAnswers[i], originalStr);  
+        hexToChar(answer[i], finalAnswers[i] + strlen(originalStr)); 
+        free(answer[i]); 
     }
-
-    answer[counter] = NULL;
-    free(hexStrCopy);
-
-    return answer;
+    finalAnswers[counter] = NULL; 
+    
+    free(answer);        
+    free(hexStrCopy);    
+    free(originalStr);   
+    
+    return finalAnswers;  
 }
 
 void rSearch(struct Node *node, char *str, char *prefix, char ***keys, int *counter) {
@@ -299,7 +306,7 @@ int main() {
     TREE_insert(&t, "hell");
     TREE_insert(&t, "helloween");
 
-    suggestions = TREE_search(&t, "h");
+    suggestions = TREE_search(&t, "x");
     if (suggestions != NULL) {
         for (i = 0; suggestions[i] != NULL; ++i) {
             puts(suggestions[i]);
