@@ -8,23 +8,19 @@ struct Node {
     int transition;
     struct Node *children[16];
 };
-
 struct Tree {
     struct Node *root;
 };
-
 struct Tree TREE_new(void) {
     /* construct an empty tree */
     struct Tree tree;
     tree.root = NULL;
     return tree;
 }
-
 int TREE_empty(struct Tree *t) {
     /* return 1 if the tree contains no keys; otherwise 0 */
     return (t->root == NULL) ? 1 : 0;
 }
-
 void rClear(struct Node *node);
 void TREE_clear(struct Tree *t) {
     /* remove all keys from the tree, and the root node */
@@ -34,7 +30,6 @@ void TREE_clear(struct Tree *t) {
     rClear(t->root);
     t->root = NULL;
 }
-
 void charToHex(char *key, char *hexArr);
 struct Node* createNode(void);
 void TREE_insert(struct Tree *t, char *key) {
@@ -63,7 +58,6 @@ void TREE_insert(struct Tree *t, char *key) {
     curr->terminal = 1;
     free(hexKey);
 }
-
 int TREE_contains(struct Tree *t, char *key) {
     /* return 1 if the tree contains the key; otherwise 0 */
     struct Node *currNode = t->root;
@@ -91,7 +85,6 @@ int TREE_contains(struct Tree *t, char *key) {
     free(hexKeyStart); 
     return (currNode->terminal == 1) ? 1 : 0;
 }
-
 void TREE_remove(struct Tree *t, char *key) {
     /* Remove the key from the tree; trim the leaves when possible */
     struct Node *currNode = t->root;
@@ -111,7 +104,6 @@ void TREE_remove(struct Tree *t, char *key) {
         free(hexKey);
         return;
     }
-    
     charToHex(key, hexKey); /* convert key to hexkey*/
     hexKeyStart = hexKey; /* store start so we don't lose in while incrementing*/
     /* start at the root and traverse tree based on chars in the key to find the key */
@@ -147,26 +139,22 @@ void TREE_remove(struct Tree *t, char *key) {
     }
     free(hexKeyStart);
 }
-
-
-
-
-
-
-
 void rSearch(struct Node *node, char *str, char *prefix, char ***keys, int *counter);
 char *myDup(char *s);
 void hexToChar(char *hexStr, char *charArr);
+char *my_strdup(const char *s);
 
 char **TREE_search(struct Tree *t, char *str) {
     struct Node *node = t->root;
     char **answer = NULL;
+    char **finalAnswers;
     char *hexStr = malloc(strlen(str) * 2 + 1);
-    char *originalStr = strdup(str);
+    char *originalStr = my_strdup(str);
     char *hexStrCopy = hexStr;
     int counter = 0;
     int capacity = 10;
     int i;
+    
     answer = malloc(capacity * sizeof(char *));
     
     while (*str != '\0') {
@@ -193,8 +181,8 @@ char **TREE_search(struct Tree *t, char *str) {
     
     rSearch(node, "", "", &answer, &counter);
     
-    char **finalAnswers = malloc((counter + 1) * sizeof(char *));  
-    for (int i = 0; i < counter; i++) {
+    finalAnswers = malloc((counter + 1) * sizeof(char *));
+    for (i = 0; i < counter; i++) {
         finalAnswers[i] = malloc(strlen(originalStr) + (strlen(answer[i]) / 2) + 1);  
         strcpy(finalAnswers[i], originalStr);  
         hexToChar(answer[i], finalAnswers[i] + strlen(originalStr)); 
@@ -208,7 +196,6 @@ char **TREE_search(struct Tree *t, char *str) {
     
     return finalAnswers;  
 }
-
 void rSearch(struct Node *node, char *str, char *prefix, char ***keys, int *counter) {
     int i;
     char *newPrefix;
@@ -231,7 +218,12 @@ void rSearch(struct Node *node, char *str, char *prefix, char ***keys, int *coun
         }
     }
 }
-
+char *my_strdup(const char *s) {
+    char *d = malloc(strlen(s) + 1);
+    if (d == NULL) return NULL;
+    strcpy(d, s);
+    return d;
+}
 char *myDup(char *s) {
     /* strdup was being weird so I made my own */
     char *d = malloc(strlen(s) + 1);
@@ -241,8 +233,6 @@ char *myDup(char *s) {
     strcpy(d, s);
     return d;
 }
-
-
 void rClear(struct Node *node) {
         /*calls recursive clear and deletes on each child until it reaches leaf 
         in which case it simply cant call recursive clear*/
@@ -256,7 +246,6 @@ void rClear(struct Node *node) {
     /* printf("DELETING: %c\n", node->transition); */
     free(node);
 }
-
 struct Node* createNode(void) {
     /*creates a blank node with children set to NULL*/
     int j;
@@ -272,7 +261,6 @@ struct Node* createNode(void) {
     }
     return newNode;
 }
-
 void charToHex(char *key, char *hexArr) {
     while (*key != '\0') {
         sprintf(hexArr, "%02X", (unsigned int)*key);
@@ -281,8 +269,6 @@ void charToHex(char *key, char *hexArr) {
     }
     *hexArr = '\0';
 }
-
-
 void hexToChar(char *hexStr, char *charArr) {
     while (*hexStr != '\0') {
         char byte[3];
@@ -298,6 +284,49 @@ void hexToChar(char *hexStr, char *charArr) {
 }
 
 int main() {
+    char input[100]; // Buffer to store user input
+    char **suggestions;
+    int i;
+
+    struct Tree t = TREE_new(); // Create an empty tree
+    TREE_insert(&t, "hello");
+    TREE_insert(&t, "hell");
+    TREE_insert(&t, "helloween");
+    TREE_insert(&t, "maahir");
+    TREE_insert(&t, "money");
+    TREE_insert(&t, "mall");
+
+    // Read user input continuously
+    while (1) {
+        printf("Enter text (or type 'exit' to quit): ");
+        scanf("%s", input);
+
+        if (strcmp(input, "exit") == 0) {
+            break; // Exit the loop if user types 'exit'
+        }
+
+        // Insert the input into the tree
+        TREE_insert(&t, input);
+
+        // Search for autocomplete suggestions based on the current input
+        suggestions = TREE_search(&t, input);
+
+        if (suggestions != NULL) {
+            // Print suggestions
+            for (i = 0; suggestions[i] != NULL; ++i) {
+                printf("%s\n", suggestions[i]);
+                free(suggestions[i]);
+            }
+            free(suggestions);
+        }
+    }
+
+    return 0;
+}
+
+
+/* 
+int main() {
     char **suggestions;
     int i;
 
@@ -306,7 +335,7 @@ int main() {
     TREE_insert(&t, "hell");
     TREE_insert(&t, "helloween");
 
-    suggestions = TREE_search(&t, "x");
+    suggestions = TREE_search(&t, "h");
     if (suggestions != NULL) {
         for (i = 0; suggestions[i] != NULL; ++i) {
             puts(suggestions[i]);
@@ -346,4 +375,4 @@ int main() {
     }
     puts("----");
     return 0;
-}
+} */
