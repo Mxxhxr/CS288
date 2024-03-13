@@ -6,6 +6,7 @@
     "stdio.h": "c",
     "stdlib.h": "c",
     "locale_t.h": "c",
-    "string.h": "c"
+    "string.h": "c",
+    "limits": "c"
   }
 }
