@@ -6,20 +6,12 @@ void swap(int *x, int *y) {
     *y = temp;
 }
 
-void selectionSort(int arr[], int n) {
-    int i, j, minIndex;
-
-    for (i=0; i < n-1; i++) {
-        minIndex = i;
-
-        for (j=i+1; j < n; j++) {
-            
-            if (arr[j] < arr[minIndex]) {
-                minIndex = j;
-            }
-        }
-        if (minIndex != i) {
-            swap(&arr[minIndex], &arr[i]);
+void insertionSort(int arr[], int n) {
+    int i;
+    for (i = 1; i < n; i++) {
+        while(i > 0 && arr[i-1] > arr[i]) {
+            swap(&arr[i-1], &arr[i]);
+            i -= 1;
         }
     }
 }
@@ -37,8 +29,9 @@ int main() {
     int n = sizeof(arr) / sizeof(arr[0]);
     printf("UnSorted array: \n");
     print(arr, n);
-    selectionSort(arr, n);
+    insertionSort(arr, n);
     printf("Sorted array: \n");
     print(arr, n);
     return 0;
 }
+

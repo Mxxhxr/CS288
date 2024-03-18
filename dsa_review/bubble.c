@@ -6,20 +6,14 @@ void swap(int *x, int *y) {
     *y = temp;
 }
 
-void selectionSort(int arr[], int n) {
-    int i, j, minIndex;
+void bubbleSort(int arr[], int n) {
+    int i, j;
 
-    for (i=0; i < n-1; i++) {
-        minIndex = i;
-
-        for (j=i+1; j < n; j++) {
-            
-            if (arr[j] < arr[minIndex]) {
-                minIndex = j;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n-1; j++) {
+            if (arr[j] > arr[j+1]) { // if item is greater than the next item, swap
+                swap(&arr[j], &arr[j+1]);
             }
-        }
-        if (minIndex != i) {
-            swap(&arr[minIndex], &arr[i]);
         }
     }
 }
@@ -33,12 +27,13 @@ void print(int arr[], int size) {
 }
 
 int main() {
-    int arr[] = {3, 1, 5, 4, 2};
+    int arr[] = {1, 2, 3, 4, 5};
     int n = sizeof(arr) / sizeof(arr[0]);
     printf("UnSorted array: \n");
     print(arr, n);
-    selectionSort(arr, n);
+    bubbleSort(arr, n);
     printf("Sorted array: \n");
     print(arr, n);
     return 0;
 }
+
