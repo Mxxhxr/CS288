@@ -62,6 +62,7 @@ while IFS= read -r url || [ -n "$url" ]; do
     mv "$xhtml_file" "downloaded_files/$new_xhtml_file" #rename xhtml file
     # python3 parser.py "downloaded_files/$new_xhtml_file"
     ((count1++))
+    sleep 2
 done < "$fname"
 
 fname=$2
@@ -77,6 +78,7 @@ while IFS= read -r url || [ -n "$url" ]; do
     mv "$xhtml_file" "downloaded_files/$new_xhtml_file" #rename xhtml file
     # python3 parser.py "downloaded_files/$new_xhtml_file"
     ((count2++))
+    sleep 2
 done < "$fname"
 
 
