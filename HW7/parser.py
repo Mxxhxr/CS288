@@ -99,15 +99,13 @@ if xhtmlFile.startswith("downloaded_files/file1"):
 
 
     #### EXTRACT REVIEWS ####
-    # div_elements = dom.getElementsByTagName('p')
-    # for div in div_elements:
-    #     class_name = div.getAttribute('class')
-    #     if class_name and ('chakra-text' in class_name.split() and 'css-1el49xh' in class_name.split()):
-    #         # Extract text nodes from the div element
-    #         text_content = ''.join(node.data.strip() for node in div.childNodes if node.nodeType == node.TEXT_NODE)
-    #         print(text_content)
-            # break
-    sql_review_score = None
+    txt = dom.getElementsByTagName("script")[2]
+    val = txt.firstChild.nodeValue
+
+    rating_start_index = val.find('"ratingValue":') + len('"ratingValue":')
+    rating_end_index = val.find(',"bestRating', rating_start_index + 1)
+    sql_review_score = val[rating_start_index:rating_end_index]
+    # print(sql_review_score)
 
     #### EXTRACT DESCRIPTION ####
     text_desc = find_element_by_id(dom.documentElement, 'description')
@@ -133,6 +131,8 @@ else:
     for span in span_tags:
         if span.getAttribute('data-product-container') == 'sales-price':
             sql_price = span.childNodes[0].nodeValue.strip()
+            if sql_price.startswith('$'):
+                sql_price = sql_price[1:]
             # print(sql_price)
             break  # Stop after finding the first matching <span> tag
 
@@ -154,7 +154,7 @@ else:
             try:
                 float(sql_review_score)
             except ValueError:
-                sql_review_score = None
+                sql_review_score = 0
             # print(sql_review_score)
             break
 
@@ -165,15 +165,16 @@ else:
         if class_name and ('cms-generic-copy' in class_name.split() and 'product__short-description' in class_name.split()):
             # Extract text nodes from the div element
             sql_description = ''.join(node.data.strip() for node in div.childNodes if node.nodeType == node.TEXT_NODE)
-            print(sql_description)
+            # print(sql_description)
             break  # Stop after finding the first matching div, remove this if you want to find all
 
     if not sql_description:
-        sql_description = None
-        print(sql_description)
+        sql_description = "No description available"
+        # print(sql_description)
 
 
 
+product_id = xhtmlFile[21:24]
 
 #connect to server
 connection = mysql.connector.connect(
@@ -188,7 +189,8 @@ cursor = connection.cursor()
 cursor.execute(
     """
     CREATE TABLE IF NOT EXISTS products288 (
-        product_name VARCHAR(255) PRIMARY KEY,
+        product_id INTEGER PRIMARY KEY,
+        product_name VARCHAR(255),
         description LONGTEXT,
         price FLOAT,
         image_url LONGTEXT,
@@ -202,7 +204,7 @@ cursor.execute(
 cursor.execute(
     """
     CREATE TABLE IF NOT EXISTS orders288 (
-        product_name VARCHAR(255) PRIMARY KEY,
+        product_name VARCHAR(255),
         price FLOAT,
         store_name VARCHAR(255)
     )
@@ -213,10 +215,10 @@ cursor.execute(
 #update products table
 cursor.execute(
     """
-    INSERT INTO products288 (product_name, description, price, image_url, review_score, store_name)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    INSERT INTO products288 (product_id, product_name, description, price, image_url, review_score, store_name)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
     """,
-    (sql_product_name, sql_description, sql_price, sql_image_url, sql_review_score, sql_store_name)
+    (product_id, sql_product_name, sql_description, sql_price, sql_image_url, sql_review_score, sql_store_name)
 )
 
 
